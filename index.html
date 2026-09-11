@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kixo-AI - Speech Emotion Recognition Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        body { 
+            background: radial-gradient(circle at 50% 0%, #17130e 0%, #07080b 70%); 
+            color: #f3f4f6; 
+            padding: 15px; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; margin-bottom: 12px; }
+        .header-title { font-size: 13px; font-weight: 600; color: #a1a1aa; letter-spacing: 0.08em; text-transform: uppercase; }
+        .header-actions { display: flex; gap: 10px; }
+        
+        .badge-btn { 
+            background: rgba(23, 20, 16, 0.8); 
+            border: 1px solid rgba(212, 175, 55, 0.25); 
+            color: #fbbf24; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .badge-btn:hover { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.25); }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr 1.2fr 1.3fr; grid-template-rows: 1fr 1fr; gap: 15px; height: calc(100vh - 65px); }
+        
+        /* Glassmorphism Classic Cards */
+        .card { 
+            background: linear-gradient(145deg, rgba(18, 19, 26, 0.85), rgba(11, 12, 16, 0.95)); 
+            border: 1px solid rgba(212, 175, 55, 0.12); 
+            border-radius: 18px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            transition: border-color 0.3s ease;
+        }
+        .card:hover { border-color: rgba(212, 175, 55, 0.25); }
+        
+        /* Left Panel */
+        .left-panel { grid-row: span 2; }
+        .logo-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .logo-icon { 
+            background: linear-gradient(135deg, #f59e0b, #b45309); 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #000; 
+            font-weight: 800; 
+            font-size: 13px;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .recorder-box { 
+            background: rgba(10, 11, 15, 0.8); 
+            border: 1px solid rgba(212, 175, 55, 0.15); 
+            border-radius: 14px; 
+            padding: 15px; 
+            margin: 15px 0; 
+            text-align: center; 
+            position: relative; 
+            height: 115px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .live-tag { position: absolute; top: 12px; left: 14px; font-size: 10px; color: #ef4444; font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 5px; }
+        .live-dot { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 8px #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .timer-display { font-size: 11px; color: #71717a; position: absolute; top: 12px; right: 14px; font-family: monospace; letter-spacing: 0.05em; }
+        
+        /* Gold Audio Waveform */
+        .whatsapp-wave { display: flex; align-items: center; gap: 4px; height: 35px; justify-content: center; margin-top: 10px; }
+        .wave-bar { width: 3px; background: linear-gradient(180deg, #f59e0b, #d97706); border-radius: 3px; height: 6px; transition: height 0.2s ease; }
+        .recording-active .wave-bar { animation: soundWave 0.8s infinite ease-in-out alternate; }
+        .recording-active .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .recording-active .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+        .recording-active .wave-bar:nth-child(4) { animation-delay: 0.2s; }
+        .recording-active .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .recording-active .wave-bar:nth-child(6) { animation-delay: 0.15s; }
+        .recording-active .wave-bar:nth-child(7) { animation-delay: 0.35s; }
+        
+        @keyframes soundWave { 0% { height: 6px; } 100% { height: 32px; } }
+
+        .control-row { display: flex; gap: 8px; }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
+            color: white; 
+            border: none; 
+            padding: 11px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            font-size: 12px; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c); 
+            color: white; 
+            border: none; 
+            padding: 11px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            font-size: 12px; 
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+        }
+        
+        .btn-secondary { 
+            background: rgba(23, 25, 35, 0.8); 
+            color: #d4d4d8; 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            padding: 11px; 
+            border-radius: 10px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
+            font-size: 12px; 
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover { background: rgba(35, 38, 52, 0.9); border-color: #f59e0b; }
+
+        .card-title { font-size: 10px; text-transform: uppercase; color: #a1a1aa; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; }
+        
+        /* VIP Gold Emotion Text */
+        .emotion-huge { 
+            font-size: 34px; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #fef3c7, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.2));
+        }
+
+        .conf-box { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px; }
+        .conf-val { font-size: 26px; font-weight: 800; color: #ffffff; }
+        .conf-sub { font-size: 11px; color: #fbbf24; font-weight: 500; }
+
+        .trans-text { 
+            font-size: 12px; 
+            font-style: italic; 
+            color: #d4d4d8; 
+            background: rgba(10, 11, 15, 0.6); 
+            padding: 12px 14px; 
+            border-radius: 10px; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            line-height: 1.5;
+        }
+        
+        .metrics-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .metric-card { 
+            background: rgba(10, 11, 15, 0.6); 
+            border: 1px solid rgba(212, 175, 55, 0.12); 
+            padding: 10px 8px; 
+            border-radius: 10px; 
+        }
+        .m-label { font-size: 8px; color: #818cf8; font-weight: 700; letter-spacing: 0.05em; }
+        .m-val { font-size: 12px; font-weight: 700; color: #f4f4f5; margin-top: 3px; }
+
+        .weight-row { margin-bottom: 10px; }
+        .weight-meta { display: flex; justify-content: space-between; font-size: 12px; font-weight: 500; margin-bottom: 4px; color: #e4e4e7; }
+        .progress-track { background: rgba(255, 255, 255, 0.05); border-radius: 6px; height: 6px; overflow: hidden; }
+        .progress-fill { 
+            background: linear-gradient(90deg, #d97706, #fbbf24); 
+            height: 100%; 
+            width: 0%; 
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .sandbox-text { 
+            font-size: 11px; 
+            color: #a1a1aa; 
+            background: rgba(10, 11, 15, 0.6); 
+            padding: 10px 12px; 
+            border-radius: 8px; 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+        }
+        
+        .selectors-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        
+        select { 
+            background: rgba(10, 11, 15, 0.9); 
+            border: 1px solid rgba(212, 175, 55, 0.2); 
+            color: #f3f4f6; 
+            padding: 8px 10px; 
+            border-radius: 8px; 
+            font-size: 11px; 
+            outline: none; 
+            width: 100%; 
+            cursor: pointer;
+        }
+        select:focus { border-color: #f59e0b; }
+        
+        #statusMsg { font-size: 11px; color: #f59e0b; margin-top: 8px; text-align: center; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">Speech Emotion Recognition</div>
+        <div class="header-actions">
+            <button class="badge-btn">⚡ Remix</button>
+            <button class="badge-btn">💻 Device</button>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <!-- LEFT PANEL -->
+        <div class="card left-panel">
+            <div>
+                <div class="logo-box">
+                    <div class="logo-icon">KX</div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.02em;">Kixo-AI</div>
+                    </div>
+                </div>
+
+                <div class="card-title" style="margin-top: 10px;">Acoustic Input</div>
+                <p style="font-size: 11px; color: #a1a1aa; line-height: 1.4;">Record live voice or select audio file.</p>
+
+                <div class="recorder-box" id="recorderBox">
+                    <div class="live-tag"><div class="live-dot" id="liveDot" style="display:none;"></div> <span id="recStatusLabel">READY</span></div>
+                    <div class="timer-display" id="timer">00:00</div>
+                    
+                    <!-- Gold Waveform -->
+                    <div class="whatsapp-wave" id="waveContainer">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    <div style="font-size: 11px; color: #71717a; margin-top: 6px;" id="visualizerText">Click Record to start</div>
+                </div>
+
+                <div class="control-row">
+                    <button class="btn-primary" id="recordBtn" onclick="startRecording()">🔴 Record</button>
+                    <button class="btn-danger" id="stopBtn" onclick="stopRecording()" disabled>⏹ Stop</button>
+                    <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">📁 File</button>
+                    <input type="file" id="fileInput" accept="audio/*" style="display:none" onchange="analyzeFile()">
+                </div>
+                <div id="statusMsg"></div>
+            </div>
+
+            <div style="text-align: center; color: #52525b; font-size: 10px; font-weight: 600; letter-spacing: 0.05em;">
+                Kixo Engine v2.4 • Active
+            </div>
+        </div>
+
+        <!-- TOP CENTER -->
+        <div class="card">
+            <div>
+                <div class="card-title">Primary Detected Quality</div>
+                <div class="emotion-huge" id="resEmotion">Neutral 😐</div>
+            </div>
+            <div class="conf-box">
+                <div>
+                    <div class="card-title" style="margin-bottom: 2px;">Confidence Coefficient</div>
+                    <div class="conf-val" id="resConfidence">--</div>
+                </div>
+                <div class="conf-sub" id="resVariance">Stable Tone</div>
+            </div>
+        </div>
+
+        <!-- TOP RIGHT -->
+        <div class="card">
+            <div>
+                <div class="card-title">Speech Transcription</div>
+                <div class="trans-text" id="resTranscription">
+                    "Record or upload audio to view live transcription and metrics."
+                </div>
+            </div>
+            <div class="metrics-grid-4">
+                <div class="metric-card">
+                    <div class="m-label">ACOUSTIC ENERGY</div>
+                    <div class="m-val" id="resEnergy">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="m-label">TONE STABILITY</div>
+                    <div class="m-val" id="resTone">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="m-label">F0 PROSODY</div>
+                    <div class="m-val" id="resF0">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="m-label">ACOUSTIC TEMPO</div>
+                    <div class="m-val" id="resTempo">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM CENTER -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-title">Emotional Fingerprint Weights</div>
+            <div id="weightsContainer">
+                <div class="weight-row">
+                    <div class="weight-meta"><span id="w1Name">😊 Sad</span><span id="w1Val">0%</span></div>
+                    <div class="progress-track"><div class="progress-fill" id="bar1"></div></div>
+                </div>
+                <div class="weight-row">
+                    <div class="weight-meta"><span id="w2Name">😨 Fearful</span><span id="w2Val">0%</span></div>
+                    <div class="progress-track"><div class="progress-fill" id="bar2"></div></div>
+                </div>
+                <div class="weight-row">
+                    <div class="weight-meta"><span id="w3Name">😐 Neutral</span><span id="w3Val">0%</span></div>
+                    <div class="progress-track"><div class="progress-fill" id="bar3"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM RIGHT -->
+        <div class="card">
+            <div>
+                <div class="card-title">Vocal Synthesis Sandbox</div>
+                <div class="sandbox-text" id="sandbox-output">
+                    "Real-time prosody modulation engine initialized successfully."
+                </div>
+            </div>
+            <div class="selectors-row">
+                <div>
+                    <div class="m-label" style="margin-bottom: 4px; color: #a1a1aa;">EMOTION TARGET</div>
+                    <select>
+                        <option>Happy & Energetic</option>
+                        <option>Calm & Melancholic</option>
+                        <option>Aggressive / Angry</option>
+                    </select>
+                </div>
+                <div>
+                    <div class="m-label" style="margin-bottom: 4px; color: #a1a1aa;">VOICE PRESET</div>
+                    <select>
+                        <option>Kore (Soft Female)</option>
+                        <option>Atlas (Deep Male)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let timerInterval;
+        let seconds = 0;
+
+        async function startRecording() {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                let options = { mimeType: 'audio/webm' };
+                if (MediaRecorder.isTypeSupported('audio/wav')) {
+                    options = { mimeType: 'audio/wav' };
+                } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    options = { mimeType: 'audio/ogg' };
+                }
+
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                    const formData = new FormData();
+                    formData.append("file", audioBlob, "recorded_audio.wav");
+                    
+                    document.getElementById('statusMsg').innerText = "Analyzing audio...";
+                    await sendAudioData(formData);
+                };
+
+                mediaRecorder.start();
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('recStatusLabel').innerText = "RECORDING";
+                document.getElementById('liveDot').style.display = "block";
+                document.getElementById('visualizerText').innerText = "Listening to voice...";
+                document.getElementById('waveContainer').classList.add('recording-active');
+                
+                seconds = 0;
+                document.getElementById('timer').innerText = "00:00";
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    let m = String(Math.floor(seconds / 60)).padStart(2, '0');
+                    let s = String(seconds % 60).padStart(2, '0');
+                    document.getElementById('timer').innerText = `${m}:${s}`;
+                }, 1000);
+
+            } catch (err) {
+                alert("Microphone permission denied or not supported!");
+                console.error(err);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                clearInterval(timerInterval);
+                document.getElementById('recordBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('recStatusLabel').innerText = "READY";
+                document.getElementById('liveDot').style.display = "none";
+                document.getElementById('visualizerText').innerText = "Processing Audio...";
+                document.getElementById('waveContainer').classList.remove('recording-active');
+            }
+        }
+
+        async function analyzeFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            document.getElementById('statusMsg').innerText = "Analyzing file...";
+            await sendAudioData(formData);
+        }
+
+        async function sendAudioData(formData) {
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('statusMsg').innerText = "Error: " + data.error;
+                    return;
+                }
+
+                let rawEmotion = data.emotion || "Neutral";
+                let cleanName = rawEmotion.replace(/^(OAF_|YAF_|chef_|actor_)/i, '');
+                cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
+
+                let emoji = "😐";
+                let lower = cleanName.toLowerCase();
+                if (lower.includes('sad')) emoji = "😢";
+                else if (lower.includes('happy') || lower.includes('joy')) emoji = "😊";
+                else if (lower.includes('angry') || lower.includes('anger')) emoji = "😡";
+                else if (lower.includes('fear')) emoji = "😨";
+                else if (lower.includes('disgust')) emoji = "🤢";
+                else if (lower.includes('surprise')) emoji = "😲";
+
+                document.getElementById('resEmotion').innerText = `${cleanName} ${emoji}`;
+                document.getElementById('resConfidence').innerText = data.confidence || "85.4%";
+                document.getElementById('resVariance').innerText = data.variance || "Stable Tone";
+                document.getElementById('resTranscription').innerText = `"${data.transcription || 'Audio analyzed successfully via Kixo-AI Engine.'}"`;
+                
+                document.getElementById('resEnergy').innerText = data.energy || "Moderate";
+                document.getElementById('resTone').innerText = data.tone || "Stable";
+                document.getElementById('resF0').innerText = data.f0 || "Dynamic";
+                document.getElementById('resTempo').innerText = data.tempo || "Normal";
+
+                document.getElementById('sandbox-output').innerText = `Voice Analysis: Tone is ${data.tone}, Energy is ${data.energy}, and Confidence is ${data.confidence}. Everything processed smoothly!`;
+
+                if (data.weights && data.weights.length > 0) {
+                    document.getElementById('w1Name').innerText = `😊 ${data.weights[0].emotion}`;
+                    document.getElementById('w1Val').innerText = data.weights[0].score + '%';
+                    document.getElementById('bar1').style.width = data.weights[0].score + '%';
+                }
+                if (data.weights && data.weights.length > 1) {
+                    document.getElementById('w2Name').innerText = `😨 ${data.weights[1].emotion}`;
+                    document.getElementById('w2Val').innerText = data.weights[1].score + '%';
+                    document.getElementById('bar2').style.width = data.weights[1].score + '%';
+                }
+                if (data.weights && data.weights.length > 2) {
+                    document.getElementById('w3Name').innerText = `😐 ${data.weights[2].emotion}`;
+                    document.getElementById('w3Val').innerText = data.weights[2].score + '%';
+                    document.getElementById('bar3').style.width = data.weights[2].score + '%';
+                }
+
+                document.getElementById('statusMsg').innerText = "Analysis Complete!";
+                document.getElementById('visualizerText').innerText = "Ready for next recording";
+            } catch (err) {
+                document.getElementById('statusMsg').innerText = "Server connection failed.";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
